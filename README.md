@@ -1,6 +1,7 @@
 # LangGraph Demo
 
 This project demonstrates the use of [LangGraph](https://github.com/langchain-ai/langgraph) for building stateful, multi-actor applications with LLMs.
+This project is for personal learning and experimentation with LangGraph, source: https://www.youtube.com/watch?v=jGg_1h0qzaM
 
 ## Project Structure
 - `requirements.txt`: Python dependencies with pinned versions.
