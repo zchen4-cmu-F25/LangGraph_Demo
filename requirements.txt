@@ -1,4 +1,4 @@
 python-dotenv==1.1.1
 langgraph==0.5.4
 ipython==9.4.0
-langchain-deepseek==0.1.4
+langchain-groq==0.3.6
