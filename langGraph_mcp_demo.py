@@ -76,8 +76,8 @@ def prepare_tools(tools, needed_tool_names=NEEDED_TOOL_NAMES, desc_length=120):
 
 # Helper: store tools in JSON
 def store_tools_json(tools, filename="available_tools.json"):
-    # Store in outputs folder
-    output_path = os.path.join("outputs", filename)
+    # Store in github_outs folder
+    output_path = os.path.join("github_outs", filename)
     tools_json = json.dumps([safe_serialize(t) for t in tools], indent=2, ensure_ascii=False)
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(tools_json)
@@ -85,8 +85,8 @@ def store_tools_json(tools, filename="available_tools.json"):
 # Factory function to create the model call
 def call_model_factory(filtered_tools):
     def call_model(state: MessagesState):
-        # Save the prompt being sent to the model into a JSON file in outputs folder
-        last_prompt_path = os.path.join("outputs", "last_prompt.json")
+        # Save the prompt being sent to the model into a JSON file in github_outs folder
+        last_prompt_path = os.path.join("github_outs", "last_prompt.json")
         with open(last_prompt_path, "w", encoding="utf-8") as f:
             json.dump(safe_serialize(state["messages"]), f, ensure_ascii=False, indent=2)
         response = qianfan_chat.bind_tools(filtered_tools).invoke(state["messages"])
@@ -126,9 +126,9 @@ async def main():
     # Example usage: async invoke the agent with a GitHub query
     github_response = await graph.ainvoke({"messages": f"List the latest one commit of the repository {GITHUB_USER}/LangGraph_Demo."})
 
-    # Store the entire message in output.json in outputs folder
+    # Store the entire message in output.json in github_outs folder
     messages = github_response.get("messages", [])
-    output_json_path = os.path.join("outputs", "output.json")
+    output_json_path = os.path.join("github_outs", "output.json")
     with open(output_json_path, "w", encoding="utf-8") as f:
         json.dump(safe_serialize(messages), f, ensure_ascii=False, indent=2)
 
