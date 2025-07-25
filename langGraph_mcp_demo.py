@@ -102,14 +102,20 @@ async def main():
 
     # Create the state graph with the filtered tools
     builder = StateGraph(MessagesState)
-    builder.add_node(call_model_factory(filtered_tools))
+    # Add the model call node
+    builder.add_node(
+        "call_model", 
+        call_model_factory(filtered_tools)
+    )
     builder.add_node(ToolNode(filtered_tools))
+    # Define the edges of the graph
     builder.add_edge(START, "call_model")
     builder.add_conditional_edges(
         "call_model",
         tools_condition,
     )
     builder.add_edge("tools", "call_model")
+    # Compile the graph
     graph = builder.compile()
 
     # Save the graph as a PNG file
