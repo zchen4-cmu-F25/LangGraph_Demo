@@ -6,11 +6,13 @@ from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.graph import StateGraph, MessagesState, START
 from langgraph.prebuilt import ToolNode, tools_condition
 
+# Load environment variables
 from dotenv import load_dotenv
 load_dotenv()
 GITHUB_PAT = os.environ.get("GITHUB_PAT")
 GITHUB_USER = os.environ.get("GITHUB_USER")
 
+# Import the necessary chat model
 from langchain_community.chat_models import QianfanChatEndpoint
 qianfan_chat = QianfanChatEndpoint(
     model="ERNIE-3.5-128K",
@@ -23,6 +25,7 @@ NEEDED_TOOL_NAMES = {
     "list_commits"
 }
 
+# Initialize the MCP client with GitHub configuration
 client = MultiServerMCPClient(
     {
         "github": {
@@ -89,10 +92,12 @@ def call_model_factory(filtered_tools):
 
 # Main function to run the agent
 async def main():
+    # Get tools from the client, filter them, and store in JSON
     tools = await client.get_tools()
     filtered_tools = prepare_tools(tools)
     store_tools_json(filtered_tools)
 
+    # Create the state graph with the filtered tools
     builder = StateGraph(MessagesState)
     builder.add_node(call_model_factory(filtered_tools))
     builder.add_node(ToolNode(filtered_tools))
