@@ -120,7 +120,7 @@ async def main():
 
     # Save the graph as a PNG file
     graph_png = graph.get_graph().draw_mermaid_png()
-    with open("graph.png", "wb") as f:
+    with open("github_graph.png", "wb") as f:
         f.write(graph_png)
     
     # Example usage: async invoke the agent with a GitHub query
