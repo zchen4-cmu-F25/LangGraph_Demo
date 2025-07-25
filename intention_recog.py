@@ -1,6 +1,15 @@
+# intention_recog.py
+# Author: chenzixuan06@baidu.com
+# Date: 2025-07-25
+# Description: This script builds an intention recognition node that determines the user's intent based on their query, using the llm.
+# It constructs a node for each of the four intents: query version, pack, query owner, and other intent.
+#
+# Original Requirement:
 # 构建一个 意图识别node：根据用户 query，判断出用户的意图，并调用相应的工具，意图有四类：查询版本号、打包、查询负责人，其他意图
 # 四类意图，分别构建构建一个 node，根据意图 print 下即可
 # 验证下 tools_condition 逻辑
+
+
 
 import os
 import json
@@ -89,7 +98,6 @@ def decide_next_node(state: AgentState) -> str:
         return "query_owner"
     else:
         return "other_intent"
-
 
 
 # Function to build the intention StateGraph
