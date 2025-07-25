@@ -103,10 +103,17 @@ async def main():
     )
     builder.add_edge("tools", "call_model")
     graph = builder.compile()
+
+    # Save the graph as a PNG file
+    graph_png = graph.get_graph().draw_mermaid_png()
+    with open("graph.png", "wb") as f:
+        f.write(graph_png)
+    
+    # Example usage: async invoke the agent with a GitHub query
     github_response = await graph.ainvoke({"messages": f"List the latest one commit of the repository {GITHUB_USER}/LangGraph_Demo."})
-    # Shorten output: only show thoughts, conversation, and error if present
-    messages = github_response.get("messages", [])
+
     # Store the entire message in output.json
+    messages = github_response.get("messages", [])
     with open("output.json", "w", encoding="utf-8") as f:
         json.dump(safe_serialize(messages), f, ensure_ascii=False, indent=2)
 
