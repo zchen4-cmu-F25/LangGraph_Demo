@@ -135,8 +135,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    # Run the main function in an event loop
-    if not asyncio.get_event_loop().is_running():
-        asyncio.run(main())
-    else:
-        print("Event loop is already running, cannot run main() directly.")
+    asyncio.run(main())
