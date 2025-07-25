@@ -1,2 +1,5 @@
 .venv
 .env
+available_tools.json
+last_prompt.json
+output.json
