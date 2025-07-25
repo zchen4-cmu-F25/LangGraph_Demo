@@ -5,19 +5,17 @@
 import os
 import json
 import asyncio
-from langchain_core.messages import SystemMessage
 from typing import Any
 from typing import Annotated, Sequence, TypedDict
-from langgraph.graph import StateGraph, START, END
-from langgraph.graph.message import add_messages
-# Define AgentState with intention
-class AgentState(TypedDict):
-    messages: Annotated[Sequence[Any], add_messages]
-    intention: str
 
 # Load environment variables
 from dotenv import load_dotenv
 load_dotenv()
+
+# Import langchain and langgraph libraries
+from langchain_core.messages import SystemMessage
+from langgraph.graph import StateGraph, START, END
+from langgraph.graph.message import add_messages
 
 # Import the necessary chat model
 from langchain_community.chat_models import QianfanChatEndpoint
@@ -26,6 +24,13 @@ qianfan_chat = QianfanChatEndpoint(
     temperature=0.6,
     timeout=30
 )
+
+
+# Define AgentState with intention
+class AgentState(TypedDict):
+    """State of the agent including messages and intention."""
+    messages: Annotated[Sequence[Any], add_messages]
+    intention: str
 
 
 # Helper: serialize for JSON
@@ -43,7 +48,6 @@ def safe_serialize(obj: Any) -> json:
         return str(obj)
     else:
         return obj
-
 
 
 # Helper: intention recognition logic (merged with model call)
@@ -87,9 +91,10 @@ def decide_next_node(state: AgentState) -> str:
         return "other_intent"
 
 
-# Main function to run the agent
-async def main():
-    # Create the state graph with MessagesState
+
+# Function to build the intention StateGraph
+def build_intention_graph() -> StateGraph:
+    """Build the intention recognition graph with four nodes for different intents."""
     builder = StateGraph(AgentState)
     # Add the intention recognition node (merged)
     builder.add_node(
@@ -117,8 +122,14 @@ async def main():
     builder.add_edge("pack", END)
     builder.add_edge("query_owner", END)
     builder.add_edge("other_intent", END)
-    # Compile the graph
-    graph = builder.compile()
+    # Compile and return the graph
+    return builder.compile()
+
+
+# Main function to run the agent
+async def main():
+    """Main function to run the intention recognition agent."""
+    graph = build_intention_graph()
 
     # Save the graph as a PNG file
     graph_png = graph.get_graph().draw_mermaid_png()
@@ -126,7 +137,7 @@ async def main():
         f.write(graph_png)
     
     # Example usage: check the version of the software (add a typo here intentionally)
-    intention_response = await graph.ainvoke({"messages": "I want to check the verison of the software."})
+    intention_response = await graph.ainvoke({"messages": "I want to check the preson onw of the software."})
 
     # Store the entire message in output.json in intention_outs folder
     output_json_path = os.path.join("intention_outs", "output.json")
