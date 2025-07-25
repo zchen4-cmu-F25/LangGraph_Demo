@@ -5,8 +5,15 @@
 import os
 import json
 import asyncio
+from langchain_core.messages import SystemMessage
 from typing import Any
-from langgraph.graph import StateGraph, MessagesState, START, END
+from typing import Annotated, Sequence, TypedDict
+from langgraph.graph import StateGraph, START, END
+from langgraph.graph.message import add_messages
+# Define AgentState with intention
+class AgentState(TypedDict):
+    messages: Annotated[Sequence[Any], add_messages]
+    intention: str
 
 # Load environment variables
 from dotenv import load_dotenv
@@ -38,32 +45,56 @@ def safe_serialize(obj: Any) -> json:
         return obj
 
 
-# Helper: call the model
-async def call_model(state: MessagesState):
-        # Save the prompt being sent to the model into a JSON file in outputs folder
-        last_prompt_path = os.path.join("outputs", "last_prompt.json")
-        with open(last_prompt_path, "w", encoding="utf-8") as f:
-            json.dump(safe_serialize(state["messages"]), f, ensure_ascii=False, indent=2)
 
-        # Call the model with the prompt
-        response = await qianfan_chat.invoke(state["messages"])
-        return {"messages": response}
+# Helper: intention recognition logic (merged with model call)
+async def intention_recognition(state: AgentState):
+    """Recognize the user's intention by LLM response and save prompt."""
+    # Add a system message to instruct the LLM to classify the intent using SystemMessage
+    system_prompt = SystemMessage(
+        content=
+        "You are an intention recognition agent. "
+        "Classify the user's intent from their message into one of the following categories: "
+        "'query_version', 'pack', 'query_owner', or 'other_intent'. "
+        "Return only the category name as your answer."
+    )
+    messages = [system_prompt] + state["messages"]
+
+    # Save the prompt being sent to the model into a JSON file in intention_outs folder
+    last_prompt_path = os.path.join("intention_outs", "prompt.json")
+    with open(last_prompt_path, "w", encoding="utf-8") as f:
+        json.dump(safe_serialize(messages), f, ensure_ascii=False, indent=2)
+
+    # Call the model with the prompt
+    response = await qianfan_chat.ainvoke(messages)
+    # Extract intention from response (assuming response is a string or has .content)
+    if hasattr(response, "content"):
+        intention = response.content
+    else:
+        intention = str(response)
+    return {"messages": response, "intention": intention}
 
 
-# Helper: intention recognition logic
-def intention_recognition(state: MessagesState):
-    """Recognize the user's intention by llm response."""
-    pass
+def decide_next_node(state: AgentState) -> str:
+    """This node will select the next node from the call_model node."""
+    intention = state.get("intention", "")
+    if "version" in intention:
+        return "query_version"
+    elif "pack" in intention:
+        return "pack"
+    elif "owner" in intention:
+        return "query_owner"
+    else:
+        return "other_intent"
 
 
 # Main function to run the agent
 async def main():
     # Create the state graph with MessagesState
-    builder = StateGraph(MessagesState)
-    # Add the model call node
+    builder = StateGraph(AgentState)
+    # Add the intention recognition node (merged)
     builder.add_node(
         "call_model", 
-        call_model
+        intention_recognition
     )
     # Add the four nodes for different intents
     builder.add_node("query_version", lambda state: print("Querying version..."))
@@ -73,13 +104,13 @@ async def main():
     # Define the edges of the graph
     builder.add_edge(START, "call_model")
     builder.add_conditional_edges(
-        "call_model", 
-        intention_recognition,
+        "call_model",
+        decide_next_node,
         {
-        "query_version": "query_version",
-        "pack": "pack",
-        "query_owner": "query_owner",
-        "other_intent": "other_intent"
+            "query_version": "query_version",
+            "pack": "pack",
+            "query_owner": "query_owner",
+            "other_intent": "other_intent"
         }
     )
     builder.add_edge("query_version", END)
@@ -91,17 +122,16 @@ async def main():
 
     # Save the graph as a PNG file
     graph_png = graph.get_graph().draw_mermaid_png()
-    with open("graph.png", "wb") as f:
+    with open("intention_graph.png", "wb") as f:
         f.write(graph_png)
     
-    # Example usage: async invoke the agent with a GitHub query
-    github_response = await graph.ainvoke({"messages": f"List the latest one commit of the repository /LangGraph_Demo."})
+    # Example usage: check the version of the software (add a typo here intentionally)
+    intention_response = await graph.ainvoke({"messages": "I want to check the verison of the software."})
 
-    # Store the entire message in output.json in outputs folder
-    messages = github_response.get("messages", [])
-    output_json_path = os.path.join("outputs", "output.json")
+    # Store the entire message in output.json in intention_outs folder
+    output_json_path = os.path.join("intention_outs", "output.json")
     with open(output_json_path, "w", encoding="utf-8") as f:
-        json.dump(safe_serialize(messages), f, ensure_ascii=False, indent=2)
+        json.dump(safe_serialize(intention_response), f, ensure_ascii=False, indent=2)
 
 
 
