@@ -18,6 +18,11 @@ qianfan_chat = QianfanChatEndpoint(
     timeout=30
 )
 
+# Specify only the tools you need
+NEEDED_TOOL_NAMES = {
+    "list_commits"
+}
+
 client = MultiServerMCPClient(
     {
         "github": {
@@ -47,9 +52,11 @@ def safe_serialize(obj):
     else:
         return obj
 
+
 # Helper: filter tools by name
 def filter_tools(tools, needed_names):
     return [t for t in tools if getattr(t, "name", None) in needed_names]
+
 
 # Helper: truncate tool descriptions
 def truncate_tool_descriptions(tools, max_length=120):
@@ -58,21 +65,19 @@ def truncate_tool_descriptions(tools, max_length=120):
             t.description = t.description[:max_length]
     return tools
 
-# Specify only the tools you need
-NEEDED_TOOL_NAMES = {
-    "list_commits"
-}
-
+# Helper: prepare tools for the model
 def prepare_tools(tools, needed_tool_names=NEEDED_TOOL_NAMES, desc_length=120):
     filtered = filter_tools(tools, needed_tool_names)
     filtered = truncate_tool_descriptions(filtered, desc_length)
     return filtered
 
+# Helper: store tools in JSON
 def store_tools_json(tools, filename="available_tools.json"):
     tools_json = json.dumps([safe_serialize(t) for t in tools], indent=2, ensure_ascii=False)
     with open(filename, "w", encoding="utf-8") as f:
         f.write(tools_json)
 
+# Factory function to create the model call
 def call_model_factory(filtered_tools):
     def call_model(state: MessagesState):
         # Save the prompt being sent to the model into a JSON file
@@ -82,6 +87,7 @@ def call_model_factory(filtered_tools):
         return {"messages": response}
     return call_model
 
+# Main function to run the agent
 async def main():
     tools = await client.get_tools()
     filtered_tools = prepare_tools(tools)
