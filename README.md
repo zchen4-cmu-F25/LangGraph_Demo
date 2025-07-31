@@ -9,7 +9,6 @@ This repository demonstrates the use of [LangGraph](https://github.com/langchain
 - `.venv/` — Python virtual environment (not tracked by git)
 - `.env` — Environment variable configuration (API keys, etc.)
 - `Agent_Bot.py` — Example agent bot using LangGraph
-- `langGraphMCP.py` — LangGraph agent with MCP tool integration
 - `langGraph_mcp_demo.py` — Demo for LangGraph MCP integration
 - `Memory_Agent.py` — Agent with memory/stateful logic
 - `ReAct.py` — ReAct agent with tool usage and streaming
