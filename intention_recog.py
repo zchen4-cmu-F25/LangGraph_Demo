@@ -30,8 +30,8 @@ from langgraph.graph.message import add_messages
 from langchain_community.chat_models import QianfanChatEndpoint
 qianfan_chat = QianfanChatEndpoint(
     model="ERNIE-3.5-128K",
-    temperature=0.6,
-    timeout=30
+    temperature=0.6, # Adjust temperature for response variability
+    timeout=30 # seconds
 )
 
 
